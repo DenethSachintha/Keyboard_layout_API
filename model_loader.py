@@ -60,8 +60,13 @@ def generate_layout(policy, letter_freqs, bigram_freqs, top9_list=None, steps=30
         obs_t = torch.from_numpy(obs).float().unsqueeze(0)
         with torch.no_grad():
             logits = policy(obs_t)
-            action = int(torch.argmax(logits, dim=-1))
+
+            # 🔥 FIX: Use sampling instead of deterministic argmax
+            dist = torch.distributions.Categorical(logits=logits)
+            action = dist.sample().item()
+
         obs, _, _, info = env.step(action)
+        
         if info["score"] > best_score:
             best_score = info["score"]
             best_layout = env.layout.copy()
